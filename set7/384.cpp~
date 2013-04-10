@@ -1,0 +1,80 @@
+#include <iostream>
+
+using namespace std;
+int slumpy(string slump) {
+   if (slump.length() < 3) // must be at least 3 chars
+      return 0;
+   if (slump[0] != 'E' && slump [0] != 'D') // first char must be D or E
+      return 0;
+   if (slump [1] != 'F' ) // first char must be followed by an F
+      return 0;
+
+   // get pos of next char after the last consecutive F.
+   int i = 2;
+   for (i=2; slump[i] == 'F'; i++);
+
+   //if the next and last char is a G, we have a slump
+   if (slump[i] == 'G' && i == slump.length()-1) {
+      return true;
+   } else { // otherwise, we either dont have a slump, or we have a slump in the slump
+      // so we recurse, checking from the next char after F, reading to the end
+      return slumpy(slump.substr(i, slump.length() - i));
+   }
+}
+int slimpy(string slimp) {
+   if (slimp[0] != 'A' || slimp.length() < 2) // must be at least 2 chars, and start with A
+      return 0;
+   if (slimp[1] == 'H' && slimp.length() == 2)
+      return 1;
+   if (slimp[slimp.length()-1] != 'C')
+      return 0;
+   if (slimp[1] == 'B')
+      return slimpy (slimp.substr(2, slimp.length() - 3));
+
+   return slumpy(slimp.substr(1, slimp.length()-1));
+}
+
+int main() {
+   int n;
+   cin >> n;
+   
+   cout << "SLURPYS OUTPUT" << endl;
+   string line;
+   getline(cin, line);
+   for (int i=0; i<n; i++) {
+      getline(cin, line);
+      cout << "line:" << line << endl;
+      // find end of slimp
+      // last H?
+      string::size_type h = line.find_last_of("H");
+      string::size_type c = line.find_last_of("C");
+      //if there is a C or an H
+      if (h != string::npos || c != string::npos) {
+	 if (h != string::npos && c != string::npos && h > c) {
+	    //if the H was the end of potential slimpy, but there is a C, not a slurpy
+	    cout << "NO 1" << endl;
+	 } else if (h != string::npos && c == string::npos) {
+	    //H was last potential slimpy, C was not found
+	    if (h != 0 && line[h-1] == 'A') {// then the char before must be an A
+	       if (slumpy(line.substr(h+1, line.length()))) {
+		  cout << "YES 3" << endl;
+	       } else {
+		  cout << "NO 3" << endl;
+	       }
+	    }
+	 } else if (c != string::npos && h == string::npos){
+	    //if the C was the end of potential slimpy
+	    if (slimpy(line.substr(0,c)) && slumpy(line.substr(c+1, line.length()))) {
+	       cout << "YES 4" << endl;
+	    } else {
+	       cout << "NO 4" << endl;
+	    }
+	 }
+	 cout << "h: " << h << endl;
+      }
+   }
+   
+   cout << "END OF OUTPUT" << endl;
+   
+   return 0;
+}

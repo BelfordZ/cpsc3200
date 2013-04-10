@@ -1,0 +1,4 @@
+// create disjoint sets, each set representing a state.
+// for each disjoint set, create the shortest path that connects all vertices.
+// find the shortest path that connects these disjoint sets
+

@@ -1,0 +1,17 @@
+#include <iostream>
+
+using namespace std;
+
+int main() {
+   
+   int numVertices = 0;
+   int numOfEdges = 0;
+   while (cin >> numOfVertices >> numOfEdges) {
+      for (int i=0; i<numOfEdges; i++) {
+	 int v1, v2;
+	 cin >> v1 >> v2;
+      }
+   }
+      
+   }
+}

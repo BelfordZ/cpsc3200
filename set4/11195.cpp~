@@ -1,0 +1,42 @@
+#include<cstdio>
+#include<cstring>
+
+using namespace std;
+
+const int MAXN=32;
+
+char map[MAXN][MAXN];
+
+int bad[16][ (1<<14) + 7];
+int n,full,ans;
+void dfs(int deep,int s,int ld,int rd) {
+    if(deep==n) {
+       ++ans;
+    }else{
+       int pos= full & ( ~(s|ld|rd) );
+       while(pos) {
+           int  p=pos&(-pos); pos-=p;
+           if(!bad[deep][p])
+              dfs(deep+1,s|p,(ld|p)<<1,(rd|p)>>1);
+       }
+    }
+}
+int main(){
+   n=14;
+   //freopen("data.txt","r",stdin);
+   int cas=0;
+   while( scanf("%d",&n)!=EOF ){
+       if(n==0) break;
+       full=(1<<n)-1; ans=0;
+       memset(bad,0,sizeof(bad));
+       for(int i=0; i<n; i++) {
+           scanf("%s",map[i]);
+           for(int j=0; j<n; j++) {
+               if(map[i][j]=='*') bad[i][1<<j]=1;
+           }
+       }
+       dfs(0,0,0,0);
+       printf("Case %d: %d\n",++cas,ans);
+   }
+   return 0;
+}

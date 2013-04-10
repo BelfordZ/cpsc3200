@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int answers[14];
+
+//computes problem up to k=13
+void getAnswers();
+int findMinimal(int k);
+
+int main()
+{
+   getAnswers();
+   for (int i=0; i<13; i++)
+      cout << answers[i] << endl;
+   return 0;
+}
+
+//Gets answer for all possible number of people (1-13)
+void getAnswers()
+{
+   for (int k=1; k<14; k++)
+   {
+      answers[k-1] = findMinimal(k);
+      cout<<"Answer for  k = " << k << " is: " << answers[k-1] << endl
+	  << "---------------" << endl;
+   }
+}
+
+//Gets the smallest m for a particular number of people
+int findMinimal(int k)
+{
+   //note that k is at least 1, so indexing into the array should
+   //be all -1
+   int size = k*2;
+ 
+   //starting m value is always at least enough to jump to the first bad guy
+   int m = k;
+   
+   cout << "for k = " << k << ", M starts at: " << m << endl;
+   
+   // return once we have found m that works
+   while(1)
+   {
+      //the current guy we are to count from
+      //after killing a person, iter should be the guy to the right
+      int iter = 0;
+      
+      //until we have killed k non-good guys
+      for (int i=0; i<k; i++)
+      {
+	 cout << "jump size: " << m << endl;
+	 cout << "current position, before jump:" << iter << endl;
+	 iter = (iter + (m-1)) % (size);
+	 cout << "current position, after jump:" << iter << endl;
+	 //if the iterater falls on a good guy, increment m, restart.
+	 if (iter < k-1)
+	 {
+	    m++;
+	    break;
+	 }
+	 else //otherwise, remove the bad guy.
+       	    size--;
+      }
+      return m;
+   } 
+}

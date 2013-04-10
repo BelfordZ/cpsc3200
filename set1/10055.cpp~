@@ -1,0 +1,14 @@
+#include <iostream>
+#include <cmath>
+#include <sstream>
+using namespace std;
+
+int main()
+{
+   long long first, second;
+
+   while(cin>>first>>second)
+   {
+      cout << first - second << endl;
+   }
+}

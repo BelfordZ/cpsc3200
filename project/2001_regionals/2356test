@@ -1,0 +1,29 @@
+2
+
+VISIT http://acm.ashland.edu/
+VISIT http://acm.baylor.edu/acmicpc/
+BACK
+BACK
+BACK
+FORWARD
+VISIT http://www.ibm.com/
+BACK
+BACK
+FORWARD
+FORWARD
+FORWARD
+QUIT
+
+VISIT http://acm.ashland.edu/
+VISIT http://acm.baylor.edu/acmicpc/
+BACK
+BACK
+BACK
+FORWARD
+VISIT http://www.ibm.com/
+BACK
+BACK
+FORWARD
+FORWARD
+FORWARD
+QUIT

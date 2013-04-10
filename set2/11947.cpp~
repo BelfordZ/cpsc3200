@@ -1,0 +1,193 @@
+#include <iostream>
+#include <string>
+#include <utility>
+#include <iomanip>
+#include <cctype>
+#include <cstdlib>
+
+using namespace std;
+using namespace std::rel_ops;
+
+// STOLEN FROM HOWARD CHENG. THANKS, Howard!!
+struct Date {
+   int yyyy;
+   int mm;
+   int dd;
+   static int const BASE_YEAR = 1753;
+   enum dayName {SUN,MON,TUE,WED,THU,FRI,SAT};
+   static bool validDate(int yr, int mon, int day) {
+      return yr >= BASE_YEAR && mon >= 1 && mon <= 12 &&
+	 day > 0 && day <= daysIn(mon, yr);
+   }    
+   bool isValid() const {
+      return validDate(yyyy, mm, dd);
+   }
+   Date(int yr = 1970, int mon = 1, int day = 1) {
+      yyyy = yr;
+      mm = mon;
+      dd = day;
+   }
+   dayName dayOfWeek() const {
+      int a = (14 - mm) / 12;
+      int y = yyyy - a;
+      int m = mm + 12 * a - 2;
+      return (dayName)((dd + y + y/4 - y/100 + y/400 + 31 * m / 12) % 7);
+   }
+   bool operator==(const Date &d) const {
+      return dd == d.dd && mm == d.mm;
+   }
+   bool operator<(const Date &d) const {
+      return mm < d.mm || (mm == d.mm && dd < d.dd);
+   }
+   static bool leapYear(int y) {
+      return (y % 400 ==0 || (y % 4 == 0 && y % 100 != 0));
+   }
+   static int daysIn(int m, int y) {
+      switch (m) {
+	 case 4  :
+	 case 6  :
+	 case 9  :
+	 case 11 :
+	    return 30;
+	 case 2  :
+	    if (leapYear(y)) {
+	       return 29;
+	    }
+	    else {
+	       return 28;
+	    }
+	 default :
+	    return 31;
+      }
+   }
+   void addDay(int n = 1) {
+      dd += n;
+      while (dd > daysIn(mm,yyyy)) {
+	 dd -= daysIn(mm,yyyy);
+	 if (++mm > 12) {
+	    mm = 1;
+	    yyyy++;
+	 }
+      }
+      while (dd < 1) {
+	 if (--mm < 1) {
+	    mm = 12;
+	    yyyy--;
+	 }
+	 dd += daysIn(mm,yyyy); 
+      }
+   }
+   void addMonth(int n = 1) {
+      mm += n;
+      while (mm > 12) {
+	 mm -= 12;
+	 yyyy++;
+      }
+      while (mm < 1)  {
+	 mm += 12;
+	 yyyy--;
+      }
+      if (dd > daysIn(mm,yyyy)) {
+	 dd = daysIn(mm,yyyy);
+      }
+   }
+   void addYear(int n = 1) {
+      yyyy += n;
+      if (!leapYear(yyyy) && mm == 2 && dd == 29) {
+	 dd = 28;
+      }
+   }
+   int daysFromStart() const {
+      int c = 0;
+      Date d(BASE_YEAR, 1, 1);
+      Date d2(d);
+      
+      d2.addYear(1);
+      while (d2 < *this) {
+	 c += leapYear(d.yyyy) ? 366 : 365;
+	 d = d2;
+	 d2.addYear(1);
+      }
+      
+      d2 = d;
+      d2.addMonth(1);
+      while (d2 < *this) {
+	 c += daysIn(d.mm, d.yyyy);
+	 d = d2;
+	 d2.addMonth(1);
+      }
+      while (d <= *this) {
+	 d.addDay();
+	 c++;
+      }
+      return c;
+   }
+};
+istream& operator>>(istream &is, Date &d) {
+   char c;
+   return is >> d.yyyy >> c >> d.mm >> c >> d.dd;
+}
+ostream& operator<< (ostream &os, const Date &d) {
+   char t = os.fill('0');
+   os << setw(2) << d.mm << '/' 
+      << setw(2) << d.dd << '/'
+      << d.yyyy; 
+   os.fill(t);
+   return os;
+}
+
+int main()
+{
+   pair<string, Date> signTable[12];
+   signTable[0] = make_pair ("aquarius",     Date(2999,1,21));
+   signTable[1] = make_pair ("pisces",       Date(2999,2,20));
+   signTable[2] = make_pair ("aries",        Date(2999,3,21));
+   signTable[3] = make_pair ("taurus",       Date(2999,4,21));
+   signTable[4] = make_pair ("gemini",       Date(2999,5,22));
+   signTable[5] = make_pair ("cancer",       Date(2999,6,22));
+   signTable[6] = make_pair ("leo",          Date(2999,7,23));
+   signTable[7] = make_pair ("virgo",        Date(2999,8,22));
+   signTable[8] = make_pair ("libra",        Date(2999,9,24));
+   signTable[9] = make_pair ("scorpio",      Date(2999,10,24));
+   signTable[10] = make_pair("sagittarius",  Date(2999,11,23));
+   signTable[11] = make_pair("capricorn",    Date(2999,12,23));
+
+   int numOfTests = 0;
+   string testInput;
+   
+   cin >> numOfTests;
+   getline(cin, testInput);
+   
+   for (int i=0; i<numOfTests; i++)
+   {
+      testInput = "";
+      getline(cin, testInput);
+
+      int month = atoi(testInput.substr(0,2).c_str());
+      int day = atoi(testInput.substr(2,2).c_str());
+      int year = atoi(testInput.substr(4).c_str());
+
+      Date birthday(year,month,day);
+      
+      birthday.addDay(280);
+
+      //for (int j=0; j<12; j++)
+      //	 signTable[j].second.yyyy = birthday.yyyy;
+      
+      for (int j=0; j<12; j++) {
+	 if (birthday >= signTable[j].second) {
+	    Date tmp = signTable[j+1].second;
+	    	   	   
+	    if (birthday < tmp) {
+	       cout << i+1 << " " << birthday << " " << signTable[j].first << endl;
+	       break;
+	    }
+	 }
+	 else if () {
+	    //Date tmp = signTable[0].second;
+	    //tmp.addYear(1);
+	    cout << i+1 << " " << birthday << " " << signTable[j].first << endl;
+	 }
+      }
+   }
+}
