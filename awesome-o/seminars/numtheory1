@@ -1,0 +1,250 @@
+Basic Number Theory
+===================
+
+Computing GCD of Integers
+-------------------------
+
+- Basic properties of GCD:
+
+  GCD(0,0) = 0
+  GCD(0,a) = a
+  GCD(a,b) = GCD(b, a-b)
+
+- If GCD(a,b) = 1, then a and b have no common factors (other than 1).
+  We say that a and b are relatively prime.
+
+- If GCD(a,b) = g, then you can always find integers s and t (not unique)
+  such that:
+
+    a*s + b*t = g
+
+- To compute GCD(a1, a2, ..., an), you can compute:
+
+    GCD(GCD(...GCD(GCD(a1, a2), a3), ...), an)
+
+- If p is a prime, and a = p^e1 * q1, b = p^e2 * q2  (p does not divide
+    q1 and q2), then GCD(a,b) has p^min(e1,e2) as one of its factors.
+
+    (i.e. GCD can be computed by looking at the prime factorizations
+     of a and b, but that's slow)
+
+- To compute the LCM of two integers, you can do:
+
+  LCM(a,b) = a/GCD(a,b) * b
+
+  Be careful to divide first and then multiply!  This avoids overflow.
+
+The Euclidean Algorithm (euclid.c)
+----------------------------------
+
+  To compute the GCD of a,b >= 0:
+
+  int gcd(int a, int b) {
+    int r;
+
+    while (b) {
+      r = a % b;
+      a = b;
+      b = r;
+    }
+    return a; 
+  }
+
+The Extended Euclidean Algorithm (exteuclid.c)
+----------------------------------------------
+
+  To compute the GCD as well as s and t such that a*s + b*t = g:
+
+  (assuming a, b >= 0)
+
+  int gcd(int a, int b, int &s, int &t) {
+    int r, r1, r2, a1, a2, b1, b2, q;
+    int A = a;
+    int B = b;
+
+    a1 = b2 = 1;
+    a2 = b1 = 0;
+    while (b) {
+      q = a / b;
+      r = a % b;
+      r1 = a1 - q*b1;
+      r2 = a2 - q*b2;
+      a = b;
+      a1 = b1;
+      a2 = b2;
+      b = r;
+      b1 = r1;
+      b2 = r2;
+    }
+    s = a1;
+    t = a2;
+    return a; 
+  }
+
+  NOTE: the code in my archive is in C, so it uses "strange syntax" for
+  pass-by-reference.
+
+What can you do with the Extended Euclidean Algorithm?
+------------------------------------------------------
+
+1. Linear Diophantine Equations
+
+   - Often, you will be asked to solve a linear equation where the
+     solutions must be integers.
+
+     e.g. you have 6c and 15c stamps, and you want to make up 83c.
+     Is it possible?  If so, how many stamps of each kind do you need?
+
+     Here, we want to solve the equation:
+
+          6x + 15y = 83
+
+     where x and y are non-negative integers.
+
+   - In general, if we have:
+
+          ax + by = c
+
+     Then there is a solution only if GCD(a,b) divides c.  In the above,
+     GCD(6,15) = 3 which does not divide 83, so there is no solution.
+
+     On the other hand,
+ 
+          6x + 15y = 81
+ 
+     has a solution.  How do we find it?  From the Extended Euclidean
+     Algorithm, we get:
+
+          6*(-2) + 15*(1) = 3
+
+     Since 81/3 = 27, we can multiply both sides by 27 to get:
+
+          6*(-54) + 15*(27) = 81
+
+     So we get one integer solution...but we don't want -54.
+
+   - It turns out that if x and y are solutions to ax + by = c, then
+     so is x + (b/g)n and y - (a/g)n where n is any integer (positive
+     or negative).
+
+     In our case:
+  
+       x = -54    y = 27       b/g = 5      a/g = 2
+
+     So if n = 11, 
+
+       x + (b/g)n = 1
+       y - (a/g)n = 5
+
+     Note that n = 12 is also a solution: x = 6, y = 3
+     So is n = 13: x = 11, y = 1
+
+   - But these are the only solutions such that both x and y are non-negative.
+
+   - Also, if we just want integer solutions (not just non-negative), we just
+     have to use the Extended Euclidean Algorithm.
+
+2. System of Linear Diophantine Equations
+
+   - When there are more than two unknowns, you can still do it two at
+     a time but it's more difficult.
+
+   - There is also a way to handle multiple equations (system of equations)
+
+   - All this is in diophantine_sys.c.  Come talk to me (and maybe work
+     for me in the summer!) if you want to know how it works.
+
+   - It is relatively efficient.
+
+   - It is very hard to get solutions which are all non-negative.  It is
+     NP-hard!
+
+3. Modular Arithmetic
+
+   - We can do arithmetic mod n
+
+   - e.g. clock (n = 12)
+
+   - The mod function is a "homomorphism", meaning that you can do mod
+     at any time during a computation (and at the end) and still obtain
+     the same result.  Useful if you want to keep the intermediate results
+     of a calculation small.
+
+   - If we want to solve the equation:
+
+     a*x = b mod n
+
+     e.g. If we start at 12:00 and move the hour hand 5 hours each time,
+     how many times does it take to reach 1:00?
+
+   - This is the same as:
+
+     a*x - b = 0 mod n
+
+     or
+
+     a*x - b = q*n      for some integer q,
+
+     so
+
+     a*x - q*n = b
+
+   - But this is just a Diophantine equation.  There is a solution only
+     if GCD(a,n) divides b.  In particular, if a and n are relatively
+     prime, there is always a solution.
+
+   - If a and n are relatively prime,
+
+       a*s + n*t = 1
+
+     taking this mod n gives
+
+       a*s = 1 mod n
+
+     so s = a^(-1) mod n
+
+     (You can take (s mod n) to make sure it's in range.)
+
+     Then
+
+       x = a^(-1) * b mod n
+
+   - IMPORTANT NOTE!!!!!!
+
+     When a >= 0 and b > 0:
+
+       - a / b is the integer quotient (floating-point quotient rounded down)
+       - a % b is the remainder and will be between 0 and b-1.
+
+     If a and/or b is negative:
+
+       - a / b is the floating-point quotient rounded up or down
+       - a % b will have its absolute value < abs(b)
+       - it is guaranteed that:
+
+         a = (a/b) * b + (a%b)
+
+       - nothing else is guaranteed!
+
+     DO NOT try it on one machine/compiler and assume all machines/compilers
+     behave the same way!
+
+     The safe way to do modular arithmetic when negative numbers are
+     involved:
+
+        r = a % b;
+        if (r < 0) r += b;
+
+     and:
+
+        q = a / b;
+        r = a % b;
+        if (r < 0) {
+          q--;
+          r += b;
+        }
+
+     This guarantees that r is between 0 and b-1.
+
+
+

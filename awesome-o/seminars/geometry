@@ -1,0 +1,158 @@
+Geometry
+========
+
+  Geometry is full of nasty special cases: vertical lines, colinear
+points, etc.  Unless you are very good, it is very difficult to get a
+correct algorithm for anything (one that works on all special cases) under
+contest conditions.  The key to solving geometry problems is to see if you
+can express the solution as a series of steps, each of which is already
+solved correctly (i.e. in the code library).  The following serves as a
+quick guide to what is in my code library and what the routines can be
+used for.
+
+============================================================================
+
+General Principles
+==================
+
+1. Most of the routines in the library assume that points have floating-point
+   coordinates.  If the input and output (and any intermediate result)
+   have integer coordinates only, change them to integers to avoid
+   rounding errors.  MAKE SURE THERE IS NO POSSIBILITY OF OVERFLOW!
+   Otherwise, always use "double".  Never use "float".
+
+2. NEVER do standard comparisons on floating-point quantities due
+   to rounding error.  To see if x == y, you should really test:
+
+     if (fabs(x-y) < EPS)
+
+   where EPS is some small number.  1e-8 generally works well.
+
+3. All angles in the math libraries are in radians.  Here are some conversion
+   formulas:
+
+           radians = degrees * pi / 180.0
+           degress = 180.0 * radians / pi
+
+   you can define (unless you are told to use a specific value of pi)
+ 
+           const double pi = atan(1)*4;
+
+4. When adding/subtracting angles, you probably want to adjust them to
+   make sure that they fall in the range 0 <= x < 2*pi or -pi < x <= pi
+   every time you do a calculation.
+
+   Note: some functions such as atan(x) return angles in the range
+   -pi <= x <= pi.  That means the angle -pi is the same as pi.  This
+   is nasty because you have two representation of the same thing and you 
+   cannot just compare the representations.  You may want to do some 
+   adjustment.
+
+   e.g. if (fabs(x - (-pi)) < EPS) x = pi;
+
+5. All polygons with n vertices are stored as an array of points.  It
+   starts anywhere in the polygon and lists the vertices in 
+   counterclockwise order.  If the problem gives you vertices in
+   clockwise order, just reverse the elements of the array.
+
+6. Line segments are specified by their end points.  Infinite lines
+   (or just lines) are specified by two points on the line.
+
+7. As usual, each routine has an associated main() to show how it is
+   intended to be used.
+
+8. Unless otherwise stated, assume a complexity of O(1) for point/line
+   routines and O(n) for polygon routines (n vertices).
+
+============================================================================
+
+Code Library
+============
+
+areapoly.c:
+  Computes the signed area of a simple (no self-intersection) polygon.
+  If the vertices are listed in counterclockwise order, the area is 
+  positive.  Otherwise it is negative.
+
+ccw.c:  VERY USEFUL!!!
+  Determines the orientation of 3 points (counterclockwise, clockwise,
+  undefined).
+
+  Given 3 points a, b, c, this routine tells us whether we are moving
+  clockwise or counterclockwise when we move from a -> b -> c.  
+  If the points are colinear:
+
+    c between a and b: undefined
+    if the vector a->b and b->c are in the same direction: counterclockwise
+    otherwise: clockwise
+
+  This is used in many of the other geometry routines.
+
+circle_3pts.c:
+  Computes the center and radius of a circle given 3 points, provided
+  that the three points are not colinear.  Otherwise an error is returned.
+
+convex_hull.c:
+  Computes the convex hull of a list of points.
+
+  The convex hull is the smallest convex polygon containing a set of
+  points.  It is also the polygon of the smallest perimeter containing
+  the set of points.  If there are n points, the complexity is O(n log n).
+
+  NOTE: see the note in the comment about duplicate and colinear points.
+
+dist_line.c:
+  Computes the distance of a point to a line.  This works by projecting
+  the point on to the line and measure the distance.
+
+  NOTE: the distance is always computed, even if the projection is not
+  on the line (the point is projected on to an extended part of the line).
+  You may want to check the projection (see my solution to problem E
+  for the Waterloo contest on Sep 20).
+
+intersectTF.c:
+  Given two line segments, return whether they intersect or not (but
+  doesn't return the point of intersection).
+
+  If you only care about whether they intersect or not, but not actually
+  care about where it is, use this.  This routine only works for line
+  segments (not infinite lines).
+
+intersect_line.c:
+  Given two 2-D line segments, return whether they intersect or not, and
+  return the point of intersection if there is a unique one.
+  See the return code for whether there is no intersection, a unique 
+  intersection, or infinite number of intersections.
+
+intersect_iline.c:
+  Given two 2-D lines (infinite), return whether they intersect or not,
+  and return the point of intersection if there is a unique one.
+
+pointpoly.c:
+  Given a polygon and a point, determines whether the point is in the
+  polygon.  The behaviour when the point is on the boundary is left to
+  the user (done via a #define).
+
+  This routine is useful in many problems.
+
+polygon_inter.c:
+  Given two convex polygons, compute their intersection as another
+  (convex) polygon.  For polygons with n vertices, this routine
+  has complexity O(n^2).  The code is brute force and long, but
+  it works.  There is a sweepline algorithm to do this in O(n log n)
+  time.  Feel free to implement it yourself.
+
+traverse.c:
+  A sample program on how to traverse a graph of (x,y) points so that
+  we always pick the most counter-clockwise route.
+
+  In this problem, you are given a list of points in the plane, as well
+  as edges connecting the points.  You start in the lower left corner,
+  and do a DFS on it.  The tricky thing is that if you have a list
+  of children you want to pick the one that is most counter-clockwise.
+  Why?  If you have such a graph then doing the traversal in such a way
+  allows you to find all the simple "boxes" that are in the graph.
+
+  In the problem you are given this graph as the division lines between
+  lots.  You are asked to count all the lots and classify them based on
+  their perimeters.

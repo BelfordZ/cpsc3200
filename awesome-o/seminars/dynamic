@@ -1,0 +1,211 @@
+Dynamic Programming
+-------------------
+
+Problem: Compute the k-th Fibonacci number defined by the following:
+
+  fib(1) = 1
+  fib(2) = 1
+  fib(n) = fib(n-1) + fib(n-2)     for n > 2
+
+Simple recursive implementation:
+
+  int fib(int n)
+  {
+    if (n == 1 || n == 2) {
+      return 1;
+    } else {
+      return fib(n-1) + fib(n-2);
+    }
+  }
+
+This takes exponential time to compute!  For example, computing fib(6):
+
+ fib(6) = fib(5) + fib(4)
+        = fib(4) + fib(3) + fib(4)
+        = fib(3) + fib(2) + fib(3) + fib(3) + fib(2)
+        = fib(2) + fib(1) + fib(2) + fib(2) + fib(1) + fib(2) + fib(1) + fib(2)
+
+Some values of fib are computed many times!
+
+Solution 1: Memoization
+-----------------------
+
+We can remember the values computed in an array, so that we don't do
+extra work if we have already computed it.
+
+First initialize an array:
+
+  int value[21];         // let's say we are only computing up to fib(20)
+  for (int i = 0; i < 21; i++) {
+    value[i] = -1;       // some invalid value
+  }
+
+Then
+
+  int fib(int n)
+  {
+    if (value[n] >= 0) {
+      return value[n];   // already computed
+    } else if (n == 1 || n == 2) {
+      return (value[n] = 1);
+    } else {
+      return (value[n] = fib(n-1) + fib(n-2));
+    }
+  }
+
+Now we are guaranteed that the recursion will not go too far in all branches.
+We in fact have a linear time algorithm.
+
+If we don't know in advance how many values we want to compute, we can
+either use a vector or a map to store the computed values.
+
+Solution 2: Dynamic Programming
+-------------------------------
+
+If we look at the recursion formula again, we notice that each value
+depends only on the previous two.  So in fact it is just as easy to do
+this iteratively:
+
+  int value[21];
+  value[1] = value[2] = 1;
+  for (int i = 3; i <= 20; i++) {
+    value[i] = value[i-1] + value[i-2];
+  }
+
+This is much faster and clearly linear time.
+
+===============================================================================
+
+Dynamic Programming Principles
+------------------------------
+
+In general, in dynamic programming we look for a way to reduce the larger
+problem to smaller subproblems.  This gives us a recursive way to look
+at the problem.
+
+Then we see how certain subproblems are computed over and over again,
+and try to remember the results in a table.
+
+Finally, we need to figure out the order in which we have to compute the
+table entries.  If this is not easy then we can use memoization.
+
+One important point: if you are solving an optimization problem, you want
+to ensure that if you look at the optimal solution for the large problem
+and break it into smaller solutions for the subproblems, the smaller
+solutions are optimal solutions for the subproblems.  This is called
+"Principle of Optimality".
+
+===============================================================================
+
+Problem: Coin Change
+
+Suppose I have k types of coins of value v1, v2, ..., vk, and an infinite 
+supply of each one.  Is it possible to pay a certain amount N by exact
+change?
+
+e.g. k = 3, v1 = 3, v2 = 7, v3 = 10.  
+
+     I cannot pay 1, 2, 4, 5, 8, 11 by exact change, but I can do it for
+     all other amounts.
+
+     How do I know?
+
+     If canpay[i] is a boolean variable meaning that the amount i can be
+     paid exactly, then:
+
+     canpay[0] = true;
+     canpay[i] = canpay[i-3] || canpay[i-7] || canpay[i-10];  for i > 0
+
+     (where canpay[n] = false if n < 0)
+
+     So you can do this in one loop:
+
+     canpay[0] = true;
+     for (int i = 1; i <= N; i++) {
+       canpay[i] = false;
+       for (int j = 0; j < k; j++) {
+         if (i-v[j] >= 0 && canpay[i-v[j]]) {
+           canpay[i] = true;
+         }
+       }
+     }
+     // canpay[N] now contains the correct answer
+
+===============================================================================
+
+Problem: Combo Deals
+
+Suppose I want to buy n widgets.  They come in k different types of packages.
+Package i contains num[i] widgets and costs price[i].  What is the cheapest
+way to buy?
+
+Idea: 
+
+  - If I were to buy 0 widgets, it costs nothing.
+
+  - If I were to buy more than 1 widget, then I must buy at least one 
+    package.
+
+  - If I buy a package containing num[i] widgets, then I still need to buy
+    n - num[i] widgets.  And I want to buy the remaining widgets as cheap
+    as possible.
+
+  - I don't know which package I should buy first, so I try them all.
+
+Code:
+
+  Let cost[i] = minimum cost to buy i widgets
+
+  cost[0] = 0;
+  for (int i = 1; i <= n; i++) {
+    cost[i] = -1;           // -1 to indicate that you cannot buy i widgets
+                            // exactly
+    for (int j = 0; j < k; j++) {
+      if (i - num[j] >= 0 && cost[i - num[j]] >= 0) {
+        // possible to buy package j and still buy the remaining
+        if (cost[i] == -1 || cost[i - num[j]] + price[j] < cost[i]) {
+          // best price so far
+          cost[i] = cost[i - num[j]] + price[j];
+        }
+      }
+    }
+  }
+  // cost[N] gives the correct answer
+
+This gives only the minimum cost but doesn't tell you how many of each
+package to buy.
+
+The usual way is to remember the decisions made in the optimization:
+
+  cost[0] = 0;
+  package[0] = 0;
+  for (int i = 1; i <= n; i++) {
+    cost[i] = -1;           // -1 to indicate that you cannot buy i widgets
+                            // exactly
+    for (int j = 0; j < k; j++) {
+      if (i - num[j] > 0 && cost[i - num[j]] >= 0) {
+        // possible to buy package j and still buy the remaining
+        if (cost[i] == -1 || cost[i - num[j]] + price[j] < cost[i]) {
+          // best price so far
+          cost[i] = cost[i - num[j]] + price[j];
+          package[i] = j;
+        }
+      }
+    }
+  }
+  // cost[N] gives the correct answer
+
+So package[n] gives the first package to buy in order to obtain the optimal
+solution.  What about the second package?  It would be package[i] where
+i = n - num[package[n]].  We keep doing this until we are done.
+
+We do a trace to get the solution:
+
+  i = n;
+  while (i != 0) {
+    cout << "Buy package " << package[i] << endl;
+    i -= num[package[i]];
+  }
+
+Notice that we are printing the packages backward (in this case it doesn't
+matter).

@@ -1,0 +1,111 @@
+From cheng@cs.uleth.ca Mon Aug 23 09:29:49 2004
+Date: Tue, 16 Sep 2003 10:41:20 -0600 (MDT)
+From: Howard Cheng <cheng@cs.uleth.ca>
+To: Programming Contest Club -- Attila Aros <a-aros@shaw.ca>,
+     Beau Durrant <beau.durrant2@uleth.ca>, Ben Burnett <ben.burnett@uleth.ca>,
+     Chad Chen <chad.chen@uleth.ca>, Chris Nowell <nowec0@uleth.ca>,
+     Corey VanTighem <corey.vantighem2@uleth.ca>,
+     David Lenz <david.lenz@uleth.ca>, Derek Nalder <grefton@yahoo.com>,
+     Elspeth Nickle <elspeth.nickle@uleth.ca>, Ethan Kim <ethan.kim@uleth.ca>,
+     Howard Cheng <cheng@cs.uleth.ca>, John Mulder <john_mulder84@yahoo.ca>,
+     Logan Birch <logan.birch@uleth.ca>,
+     Massih Khorvash <massih.khorvash@uleth.ca>,
+     Matt Voroney <matt.voroney@uleth.ca>, Randy Hahn <randy.hahn2@uleth.ca>,
+     Rex Forsyth <forsyth@cs.uleth.ca>, Stephen March <steve@enerds.ca>,
+     Steven Mathers <steven.mathers@uleth.ca>,
+     Tobias Contreras <tobias.contreras3@uleth.ca>,
+     Troy Ronda <troy.ronda@uleth.ca>, Wesley Penner <wesley.penner@uleth.ca>,
+     Zachary Friggstad <zac.friggstad@uleth.ca>,
+     Zhenshuan Zhang <zhenshuan.zhang@uleth.ca>
+Subject: Cycle decomposition primer
+
+Hi all,
+
+  Before I talk about cycle decomposition (used to solve the clock
+problem I mentioned yesterday), I forgot one thing in my last message:
+we may end up working quite close together, and I have no problems if
+you wish to call me by my first name (in fact it makes me feel not as
+old).  I am fine with whatever you are comfortable with.
+
+  I mentioned "cycle decomposition" as a way to solve the clock
+problem.  I'll give a very brief intro to this topic.  If you don't
+have time to read this you can save it and read it later.  I'll
+probably talk about it at some point.
+
+  Here we go: let's say we have a permutation of n objects (0, 1, ...,
+n-1).  Here is an example of how we write down the permutation:
+
+          0  1  2  3  4  5 ...n-2 n-1
+          1  0  3  2  5  4    n-1 n-2
+
+This means that an object in the top row gets sent to the position
+specified below it.  Thus, object 0 is sent to position 1, object 1 is
+sent to position 0, etc.  If you want to store this in memory you only
+need to store the bottom row in an array, because the top row are just
+the array indices.
+
+  If you look at this, you see that object 0 gets sent to position 1.
+If you do this again, whatever is in position 1 (object 0) gets sent
+to position 0, the original starting point.  What that means is that
+if you apply the same permutation twice (or any multiple of 2), object
+0 ends up at the same place it started.  We say that "0 is in a cycle
+of length 2" or "0 is in a 2-cycle".  An element that is not moved by
+the permutation is in a 1-cycle.
+
+  If you want to know the length of a cycle of a particular element,
+you just have to follow it along until it comes back to the starting
+place.  Another thing to note is that everything else in the same
+cycle has the same length.  So if you have 0 -> 1 -> 2 -> 0, then 1
+and 2 also has the same length.  Therefore, as you are following along
+a cycle you can mark the ones you have seen, because you don't have
+to look at them again.
+
+  Another thing to notice is that any permutation can be "decomposed"
+into disjoint cycles (i.e. no element is in two different cycles).
+In the above, each consecutive pair is a disjoint 2-cycle.
+
+  Now, if I have a cycle of length k, then after applying the same
+permutation k times (or any multiples of k) all the elements in the
+cycle goes back to where they started.  If you want to know how many
+times it takes for the elements of two disjoint cycles of length k1
+and k2 to go back to where they started, that would be any common
+multiple of k1 and k2.  If you want to find the first time it happens,
+it is the least common multiple (lcm) of k1 and k2.  If you have
+more cycles, you just have to take lcm of more numbers.
+
+  That's it.  So for the clock problem you simulate the clock for 12
+hours to figure out the permutation, and from the cycle decomposition
+you can figure out how many 12-hour period it takes to get back to
+the starting configuration.
+
+  What's the complexity of cycle decomposition?  It is O(n), because
+you only have to look at each element at most twice: you mark it once
+to say that you have seen it in a cycle, and another time when you
+scan down the list to see which elements haven't been used in a cycle
+yet.  It's like finding all the connected components in a graph with
+DFS.  It is cheap.
+
+  Computing the lcm is trickier than you may think.  To compute
+lcm(a,b,c,d,...), you can compute lcm(...lcm(lcm(lcm(a,b),c),d)...).
+I have code to compute gcd of two numbers in
+~cheng/algorithms/src/euclid.c, and one way to compute lcm(a,b) is
+
+  lcm(a,b) = a*b/gcd(a,b);
+
+What is wrong with this?  How would you fix it?  This illustrates why
+blindly translating formulas from textbooks into code may lead to
+disasters (because you are least likely to think that the formula is
+"wrong" while debugging).
+
+  This idea of separating "repetitions" into components and taking the
+lcm to find the overall "period" is one of the many tricks appearing in
+problems.
+
+Howard
+
+---
+Howard Cheng                 e-mail: cheng@cs.uleth.ca
+Assistant Professor          URL   : http://www.cs.uleth.ca/~cheng/
+University of Lethbridge     Phone : (403) 329-2182
+Alberta, Canada              Fax   : (403) 317-2882
+

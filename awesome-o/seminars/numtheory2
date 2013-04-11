@@ -1,0 +1,168 @@
+Basic Number Theory 2
+=====================
+
+- When a problem involves "factors" and "divisors", one of the first
+  things you should think about is: can I solve this problem easily if
+  I know the prime factorizations of the numbers?
+
+- If so, then you should ask: is computing the prime factorization 
+  feasible?  It is if you are talking about standard int (32-bit 
+  integers).
+
+- If prime factorization is not feasible, forget it.  See if you can
+  formulate the problem as a GCD problem.
+
+Factoring Integers into Primes
+------------------------------
+
+Fact: every integer can be uniquely factored into a product of primes.
+
+The following code does the factoring relatively efficiently:
+
+  void factor(int n)
+  {
+    long long k;    // question: why does k have to be long long?
+    bool printed = false;
+
+    // don't have to do the following if n >= 0
+    if (n < 0) {
+      n *= -1;
+      cout << -1 << endl;
+      printed = true;
+    }
+
+    while (n % 2 == 0) {
+      n /= 2;
+      cout << 2 << endl;
+      printed = true;
+    }
+
+    for (k = 3; k * k <= n; k += 2) {    // only need to check the odd ones
+      while (n % k == 0) {
+        n /= k;
+        cout << k << endl;
+      }
+      printed = true;
+    }
+
+    if (n > 1 || !printed) {   // this catches the case n = 0, n = 1.
+      cout << n << endl;
+    }
+  }
+
+Notes:
+
+  1. Instead of printing the factors, you can store them for further 
+     processing, or you can mix other calculations in between.  
+
+  2. If we have a counter e that is set to 0 before each while loop and
+     is incremented each iteration, after the while loop k^e is a factor
+     of n (k is the prime).
+
+  3. The for loop executes at most sqrt(n)/2 times, so if n is an int then
+     it executes at most 2^15 times.  This is fast.  There isn't much point
+     to test only odd primes because it's more work to figure out which
+     numbers are prime.
+
+     In general, if the input is an N-bit number, the number of iterations
+     is approximately 2^(N/2)-1.  So 32-bit numbers are fine, but 
+     64-bit numbers are not.
+
+  4. We compare k*k <= n because we don't want to use sqrt (round-off
+     errors).  Note that n can decrease (as we discover more factors),
+     so in many case this can be very fast.
+
+     Also, computing sqrt(n) in every iteration is slow.  k*k is much
+     faster.
+
+     Exercise: how do you compute (k+2)*(k+2) without any multiplication,
+     if you already know the value of k*k?
+
+  5. Why does k have to be long long?  Imagine what happens when 
+     n = 2^31-1, which is prime.  Eventually, we will get to a value
+     of k such that k*k < n but (k+2)*(k+2) > n.  But (k+2)*(k+2)
+     will overflow as an int, so it becomes negative.  So you get an
+     infinite loop!
+
+Primality Testing
+-----------------
+
+- The prime factorization code above can easily be transformed into a
+  primality test:
+
+  bool prime(int n)
+  {
+    long long k;    // question: why does k have to be long long?
+
+    // assume that n > 0
+    if (n == 1) {
+      return false;
+    }
+
+    if (n % 2 == 0) {
+      return false;
+    }
+
+    for (k = 3; k * k <= n; k += 2) {    // only need to check the odd ones
+      if (n % k == 0) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+Number of Divisors
+------------------
+
+- From the prime factorization we can get the number of divisors easily.
+
+- For example, 600 = 2^3 * 3 * 5^2.  Each divisor of 600 must
+  have 2^i * 3^j * 5^k where 
+
+    0 <= i <= 3
+    0 <= j <= 1
+    0 <= k <= 2
+
+  and every choice of i,j,k satisfying these constraints give a different
+  divisor.  So the number of divisors is 4*2*3 = 24
+
+- In general, if n = p1^e1 * p2^e2 * ... * pm^em, then the number of
+  divisors is (e1+1)*(e2+1)*...*(em+1).  This also works if n is prime!
+
+Euler Phi Function
+------------------
+
+- The Euler Phi function phi(n) is defined to be the number of integers
+  from 1 to n that is relatively prime to n.
+
+- Why is this useful?
+
+  e.g. if you have a clock and you increment the hours with a fixed step
+       size, we have seen that the step size must be relatively prime to
+       12 if you want every hour to be hit at some point.  There
+       are 4 possibilities (1,5,7,11), so phi(12) = 4.
+
+       Similarly, if you try to generate random numbers by adding a
+       fixed step to the previous number (mod M), then the number of
+       suitable step sizes is phi(M).
+
+- If n is prime, then phi(n) = n-1 because everything except n itself
+  is relatively prime to n.
+
+- If n = p^e for some prime p, then we only have to eliminate multiples
+  of p.  Since there are p^(e-1) multiples of p from 1 to p^e, we have
+
+  phi(n) = p^e - p^(e-1) = p^(e-1) * (p-1)
+
+- It turns out that if n = p1^e1 * p2^e2 * ... * pm^em, you can compute
+  the Euler Phi of each power of prime and multiply the results:
+
+    phi(n) = phi(p1^e1) * phi(p2^e2) * ... * phi(pm^em)
+           = p1^(e1-1) * (p1-1) * p2^(e2-1) * (p2-1) * ... * pm^(em-1) * (pm-1)
+
+  If you want to know why this works, come and ask me (or take a number
+  theory course).
+
+- We can easily fold the calcuation of Euler Phi into the prime factorization
+  code.

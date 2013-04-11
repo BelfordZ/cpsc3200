@@ -1,0 +1,194 @@
+Graph basics
+------------
+
+  - what is it?
+    - definitions: 
+      - vertex/node, edges, directed/undirected
+      - weights
+      - degree, in-degree, out-degree
+
+  - representation: 
+    - label nodes 0, 1, ..., n-1
+
+    - Adjacency matrix:
+
+      int adj[MAX_NODES][MAX_NODES];
+
+        adj[i][j] = 1 if (i,j) is an edge
+                    0 otherwise
+
+      or
+
+        adj[i][j] = w if (i,j) is an edge with weight w
+                  = X if (i,j) is not an edge (X is an invalid value for weight)
+
+      - easy to use and represent
+      - symmetric if undirected  (adj[i][j] = adj[j][i])
+      - algorithms automatically take Omega(n^2) time
+      - useful for dense graph or small n.
+
+    - Adjacency list:
+
+      typedef struct {
+        int deg;
+        int nbrs[MAX_DEGREE];
+      } Node;
+      Node nodes[MAX_NODES];
+
+      - useful for larger n's but maximum degree is small (e.g. a grid)
+      - useful if total number of edges is small (use vector for nbrs in C++)
+      - algorithms may be faster
+      - no help if you have a dense graph
+      - easy to add edges, not so easy to remove them
+  
+  - Traversal: DFS (Depth-first search)
+
+    DFS(node v)
+      mark v as visited
+      Do whatever you need to do with the node
+      for all neighbours w of v that has not been visited:
+        DFS(w)
+      Do whatever you need to do with the node
+
+    code:
+
+    /* adjacency matrix */
+    void DFS(int adj[MAX_NODES][MAX_NODES], int n, int v, char *visited)
+    {
+      int w;
+
+      visited[v] = 1;
+      for (w = 0; w < n; w++) {
+        if (adj[v][w] && !visited[w]) {
+          DFS(adj, n, w, visited);
+        }
+      }
+    }
+
+    /* adjacency list */
+    void DFS(Nodes nodes[MAX_NODES], int n, int v, char *visited)
+    {
+      int i, w;
+
+      visited[v] = 1;
+      for (i = 0; i < nodes[v].deg; i++) {
+        w = nodes[v].nbrs[i];
+        if (!visited[w]) {
+          DFS(nodes, n, w, visited);
+        }
+      }
+    }
+    
+    Start by calling: 
+
+    memset(visited, 0, n);
+    DFS(adj, n, v, visited);    /* v is any vertex you want */
+
+    or
+
+    memset(visited, 0, n);
+    DFS(nodes, n, v, visited);
+
+    All vertices reachable from v will be visited.
+
+    - connected components (undirected graph):
+      
+      - Instead of just marking v as visited, mark it with a number (say 1).
+      - after calling DFS on a vertex 0, check to see if there any unmarked
+        vertices.  Call DFS on that vertex with a different mark, repeat.
+
+      e.g.
+
+        memset(visited, 0, n);
+        mark = 0;
+        for (v = 0; v < n; v++) {
+          if (!visited[v]) {
+            DFS(adj, n, v, visited, ++mark);
+          }
+        }
+        /* mark is now the number of components, visited[v] is the number
+           of the component vertex v belongs to (starting from 1) */
+        
+    - cycles (undirected graph)
+
+      - if we are inside DFS and one of the neighbours has been visited
+        already, we have a cycle
+
+    - topological sort (directed graph)
+
+      - scheduling.  (i,j) is an edge means i must be done after j.
+
+      - Run DFS on each unvisited vertex (like connected component)
+        After the recursive call, do job v.  The recursive call takes
+        care of doing all the things v depends on.
+
+        Alternatively, just label the vertex with an increasing counter
+        to indicate where it is.
+
+      - Vertices not reachable from v are either independent or depends on v.
+        Either case, do them later.
+
+      - We should never get into a situation in which one of the neighbours
+        has been visited but not yet done.  If this does occur it means
+        that we have a cycle in the graph and you can't do it.
+
+  - Traversal: Breadth-first Search (BFS)
+
+    - pick a node v, put it into a queue
+    - while queue is not empty
+        v = take from head of queue
+        mark v visited
+        do something to v
+        for each neighbour w of v
+          if w has not been visited
+            add w to end of queue
+        
+    - code: see bfs_path.c
+
+    - same nodes get visited as DFS, just in different order
+    - closer ones get visited first (closer = fewer edges from initial node)
+    - one way to find shortest paths (in terms of number of edges)
+
+    - DFS is usually preferred because it is faster (to code)
+
+  - Eulerian tours
+
+    - Imagine someone walking from one vertex to another.  An Eulerian
+      tour is a tour that starts from one vertex and ends up at the
+      same vertex, but each edge is used exactly once.  Also drawing
+      a figure without picking up the pen.
+
+    - Eulerian path: similar, but you start at one vertex and end up at
+      another.
+
+    - Eulerian tour exists iff degree of each vertex is even *AND* graph
+      is connected for undirected graph.  For directed graph, the
+      graph has to be connected and the indegree and outdegree are the
+      same at each vertex.
+
+    - Eulerian path: exists iff connected and one pair of vertices have
+      odd degrees (undirected).  The path must start and end at those
+      vertices.  For directed graphs, one vertex must have indegree = 
+      outdegree-1 (the start), another one with indegree = outdegree + 1
+      (the end), and every other vertex indegree = outdegree.
+
+    - To find an Eulerian tour: see eulertour.c (undirected graph).
+      Can be modified for directed graphs or for Eulerian paths if you
+      know what you are doing.
+
+Advanced Graph Algorithms (next week)
+-------------------------------------
+
+  - Shortest paths
+
+    - Dijkstra
+
+    - Floyd
+
+    - Bellman-Ford
+
+  - Minimum Spanning Trees
+
+  - Bipartite matching, assignment
+
+  - Network flow

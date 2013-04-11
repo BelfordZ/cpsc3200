@@ -1,0 +1,239 @@
+Graph Connectivity Incrementally
+--------------------------------
+
+  Suppose we are building an undirected graph incrementally (by adding one
+or more edges at a time), and at each step, I want to know one or more of
+the following:
+
+  - if there is path from u to v
+  - is the graph connected
+  - the number of connected components
+
+  We can run DFS at every step, but there is a much faster way.
+
+  Aside: Dynamic equivalence relations
+  ------------------------------------
+
+    An equivalence relation is a binary relation that is reflexive, symmetric
+  and transitive.  That means:
+
+    Reflexive: x is always related to x
+    Symmetric: if x is related to y then y is related to x
+    Transitive: if x is related to y and y is related to z, then x is related
+                to z.
+
+  Examples of equivalence relations:
+
+    - a == b
+    - vertex a is reachable from vertex b in an undirected graph
+
+  NOT examples of equivalence relations:
+
+    - a > b  (neither reflexive nor symmetric)
+    - reachability in a directed graph (not symmetric)
+
+So we can rephrase our problem as: given a set of related pairs, we want
+to group everything related together (explicit or implicit by the 3 rules 
+above), and we are going to receive these pairs incrementally.
+
+  This is called the "union find problem".
+
+Union Find Algorithm (unionfind.c)
+----------------------------------
+
+  - Represent each set as a rooted tree
+  - To find the label of the group a belongs to, call find(a).  This
+    just follows the edges to the root and return the label of the root.
+  - To make two sets equivalent, just take the root of one of the sets
+    and attach it as a child of the root of the other set.  
+    merge(a,b): merges the sets containing a and b
+
+  - There are some optimizations possible.  Amortized time for n operations
+    is O(n log* n).  Basically O(n), or constant time per merge/find 
+    operation.
+
+Back to graph connectivity
+--------------------------
+
+  - We initialize union find structure to have each element in its own
+    set.
+  - As we see each edge (u,v), we do merge(u,v)
+  - At any step, u and v are connected if find(u) == find(v).
+  - To count connected components, just look through find(0), find(1), ...
+    find(n-1) and see how many distinct labels there are.
+
+Slightly different problem
+--------------------------
+
+  - Given a graph and a list of edges/nodes to delete, determine how
+    many steps in which the graph is not connected.
+
+  - Inefficient to do directly (run DFS after every deletion)...
+
+  - Instead of deleting, start from an empty graph and add nodes/edges
+    in reverse order.  Use union find.
+
+==============================================================================
+
+Permutations
+============
+
+  - If there are n objects, there are n! permutations.
+
+    10! = 3,628,800    O(n!) is doable if n <= 10
+    11! = 39,916,800              iffy if n = 11
+                             forget it if n >= 12
+
+  - For each object that is repeated k times, divide by k!.
+    e.g. number of permutations of 1,1,1,2,2,3 is 6!/3!/2!
+
+  - How to store a permutation:
+
+    - Use an array.  perm[i] = j means that the object in the i-th
+      position is permutated to the j-th position.
+
+    - You can think of this as a directed graph, where the edge i -> j
+      means object i gets sent to position j.  The in-degree and out-degree
+      of each vertex is exactly 1.  Self-loops are allowed.
+
+  - How to apply a permutation:
+
+    for (i = 0; i < n; i++) {
+      new[perm[i]] = old[i]; /* note: old and new cannot be the same array */
+    }
+
+  - How to generate permutations (duplicate permutations if there are
+    duplicates!):
+
+    void permutations(int *perm, int n, int index)
+    {
+      int i, t;
+
+      if (index == n) {
+        // do whatever you need with the permutation in perm
+      }
+      for (i = index; i < n; i++) {
+        t = perm[i];
+        perm[i] = perm[index];
+        perm[index] = t;
+        permutations(perm, n, index+1);
+        t = perm[i];
+        perm[i] = perm[index];
+        perm[index] = t;
+      }
+    }
+
+    call with:
+
+    permutations(perm, n, 0);
+
+    where perm contains all the objects (distinct) to be permuted.
+
+  - How to generate them in lexicographical order:
+
+    void permutations(int *perm, int n, int index)
+    {
+      int i, t;
+
+      if (index == n) {
+        // do whatever you need with the permutation in perm
+        return;
+      }
+      for (i = index; i < n; i++) {
+        permutations(perm, n, index+1);
+        for ( ; i < n-1 && perm[index] == perm[i+1]; i++) ;
+        if (i < n-1) {
+          t = perm[index];
+          perm[index] = perm[i+1];
+          perm[i+1] = t;
+        }
+      }
+      t = perm[index];
+      for (i = index; i < n-1; i++) {
+        perm[i] = perm[i+1];
+      }
+      perm[n-1] = t;
+    }
+
+    Call initially with a sorted array (the lexicographically least
+    permutation).  It works even when there are duplicate elements
+    (permutations generated are unique).
+
+  - How to get the lexicographically next permutation?
+
+    - use STL's next_permutation and prev_permutation   (O(n) time)
+
+      next_permutation(perm, perm+n);     // returns false
+
+    - in C:
+
+      int next_perm(int *perm, int n)
+      {
+        int i, j, t;
+
+        for (i = n-1; i >= 1 && perm[i-1] >= perm[i]; i--) ;
+        if (i == 0) return 0;        /* no next permutation */
+        for (j = n-1; perm[i-1] >= perm[j]; j--) ;
+        t = perm[i-1];
+        perm[i-1] = perm[j];
+        perm[j] = t;
+        for (j = n-1; i < j; i++, j--) {
+          t = perm[i];
+          perm[i] = perm[j];
+          perm[j] = t;
+        }
+        return 1;
+      }
+
+Inversions
+----------
+
+  - An inversion in a permutation is a pair (i,j) such that i < j but
+    perm[i] > perm[j].
+
+  -   Sorted: 0 inversions
+    Reversed: C(n,2) = n*(n-1)/2 inversions
+
+    Tells you how "unsorted" a sequence is
+
+  - swapping adjacent elements changes the number of inversions by 1
+    (increase or decrease)
+
+  - useful for determining minimum number of operations to sort a list
+
+Sorting
+-------
+
+  - In C++ and STL:
+
+    - define bool operator<(const Obj &a, const Obj &b) { ... }
+
+      vector<Obj> vec;
+      Obj A[100];
+
+      sort(vec.begin(), vec.end());
+      sort(A, A+100);
+
+  - In C:
+
+      define: 
+
+        int cmp(const void *a, const void *b) 
+        {
+          Obj *x = (Obj *)a, *y = (Obj *)b;
+
+          /* return -1 if *x < *y,
+                     0 if *x == *y,
+                     1 if *x > *y        */
+        }
+
+        Obj A[100];
+        qsort(A, 100, sizeof(Obj), cmp);
+
+Order, Cycle Decomposition
+--------------------------
+
+  - See previous article
+
+  - Can be thought of as finding cycles in the "permutation graph"
+
