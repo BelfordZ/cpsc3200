@@ -1,1 +1,1 @@
-Library started by Howard Cheng
+Competitive programming problems from UVa.
