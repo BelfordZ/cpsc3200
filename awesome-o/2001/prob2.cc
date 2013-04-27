@@ -21,13 +21,13 @@ int main(void)
   in.open(filename, ios::in); 
   if (!in) { 
     cout << "could not open input file " << filename << endl; 
-    exit(1); 
+    return(1); 
   } 
   sprintf(filename, "prob%d.out", PROBLEM); 
   out.open(filename, ios::out); 
   if (!out) { 
     cout << "could not open output file " << filename << endl; 
-    exit(1);
+    return(1);
   } 
   out << "Program " << PROBLEM << " by team " << TEAM << endl; 
   solve_problem(); 
